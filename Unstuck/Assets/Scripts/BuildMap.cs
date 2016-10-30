@@ -9,6 +9,8 @@ public class BuildMap : MonoBehaviour {
     public GameObject door;
     public GameObject button;
     public GameObject player;
+    public Material floorMaterial;
+    public Material wallMaterial;
     private int playerId;
     public GameObject enemyPlayer;
     private int enemyPlayerId;
@@ -21,6 +23,9 @@ public class BuildMap : MonoBehaviour {
     void Start () {
         floor = Instantiate(floor);
         floor.transform.position += new Vector3(0, 0, 0);
+        floor.GetComponent<Renderer>().material = floorMaterial;
+        floor.GetComponent<Renderer>().material.mainTextureScale = new Vector2(40, 40);
+        floor.GetComponent<Renderer>().material.SetTextureScale("_BumpMap", new Vector2(40, 40));
         for (int i = 0; i < mapLayoutGameObject.Length; i++)
         {
             mapLayoutGameObject[i] = new GameObject[40];
@@ -113,9 +118,25 @@ public class BuildMap : MonoBehaviour {
             enemyPlayer.transform.SetParent(transform);
             enemyPlayer.transform.position = startPos;
             var renderer = enemyPlayer.GetComponent<Renderer>();
-            renderer.material.color = Color.black;
+            renderer.material.color = new Color(230f/255f, 116f/255f, 0);
             enemyPlayerId = id;
         }
+    }
+
+    public void teleportPlayer(int id, int c, int r)
+    {
+        GameObject target;
+        if (id == playerId)
+        {
+            target = player;
+        }
+        else
+        {
+            target = enemyPlayer;
+        }
+        var navigateToPos = target.GetComponent<NavigatePosition>();
+        navigateToPos.stopMoving();
+        target.transform.position = new Vector3((float)(c - 19.5), (float)(0.5), (float)(19.5 - r));
     }
 
     public void buildLevel(int c, int r, string input)

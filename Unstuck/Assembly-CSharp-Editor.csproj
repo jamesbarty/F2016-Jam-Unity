@@ -48,6 +48,7 @@
      <Compile Include="Assets\SocketIO\JSONObject\Editor\JSONChecker.cs" />
      <None Include="Assets\SocketIO\JSONObject\readme.txt" />
      <None Include="Assets\SocketIO\Readme.txt" />
+     <None Include="Assets\prototype_textures\readme.txt" />
  <Reference Include="UnityEditor.Advertisements">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/Advertisements/Editor/UnityEditor.Advertisements.dll</HintPath>
  </Reference>

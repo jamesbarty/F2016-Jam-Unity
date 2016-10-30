@@ -16,6 +16,11 @@ public class NavigatePosition : MonoBehaviour {
 
 	}
 
+    public void stopMoving()
+    {
+        moving = false;
+    }
+
     public void navigateTo(Vector3 startPos, Vector3 endPos, float dur)
     {
         t = 0;

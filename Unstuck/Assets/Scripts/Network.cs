@@ -220,6 +220,19 @@ public class Network : MonoBehaviour {
         socket.On("moveTo", OnMove);
         socket.On("doorToggle", OnDoorToggle);
         socket.On("gameOver", OnGameOver);
+        socket.On("playerKilled", OnPlayerKilled);
+    }
+
+    private void OnPlayerKilled(SocketIOEvent e)
+    {
+        Debug.Log("Killing player");
+        Debug.Log(e.data);
+
+        int id = int.Parse(e.data["id"].ToString());
+        int x = int.Parse(e.data["spawnCoords"]["x"].ToString());
+        int y = int.Parse(e.data["spawnCoords"]["y"].ToString());
+
+        mapBuilder.teleportPlayer(id, x, y);
     }
 
     private void OnDoorToggle(SocketIOEvent e)
@@ -250,6 +263,10 @@ public class Network : MonoBehaviour {
         {
             gameResultText.text = "You Lose :(";
         }
+
+        socket.Off("moveTo", OnMove);
+        socket.Off("doorToggle", OnDoorToggle);
+        socket.Off("gameOver", OnGameOver);
     }
 
     private void OnMove(SocketIOEvent e)
