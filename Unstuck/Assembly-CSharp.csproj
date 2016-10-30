@@ -46,8 +46,10 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Scripts\BuildMap.cs" />
+     <Compile Include="Assets\Scripts\ManualConnect.cs" />
      <Compile Include="Assets\Scripts\NavigatePosition.cs" />
      <Compile Include="Assets\Scripts\Network.cs" />
+     <Compile Include="Assets\Scripts\NetworkOld.cs" />
      <Compile Include="Assets\SocketIO\JSONObject\JSONObject.cs" />
      <Compile Include="Assets\SocketIO\JSONObject\JSONTemplates.cs" />
      <Compile Include="Assets\SocketIO\JSONObject\VectorTemplates.cs" />

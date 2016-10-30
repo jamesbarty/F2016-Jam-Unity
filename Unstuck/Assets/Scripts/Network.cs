@@ -1,101 +1,366 @@
 ﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using SocketIO;
+using UnityEngine.UI;
 using System;
+using System.Collections;
+using SocketIO;
+using System.Collections.Generic;
 
 public class Network : MonoBehaviour {
 
+    bool connected = false;
+
+    public GameObject map;
+    public GameObject OpenGamesPanel;
+    public GameObject LobbyPanel;
+    public GameObject LoginPanel;
+    public GameObject GameLobbyPanel;
+    public GameObject NameTextPanel;
+    public GameObject GameOverPanel;
+    public Text gameResultText;
+    public Text iptext;
+
+    private int playerId;
+
     static SocketIOComponent socket;
 
-    public GameObject playerPreFab;
-    public GameObject map;
+    static BuildMap mapBuilder;
 
-    private string[][] maplayout = new string[40][];
-
-    Dictionary<string, GameObject> players;
-
-    GameObject player;
-
-    // Use this for initialization
-    void Start () {
+	// Use this for initialization
+	void Start () {
         socket = GetComponent<SocketIOComponent>();
+        mapBuilder = map.GetComponent<BuildMap>();
         socket.On("open", OnConnected);
-        socket.On("spawn", OnSpawned);
-        socket.On("move", OnMove);
+	}
 
-        maplayout[0] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w" };
-        maplayout[1] = new string[40] { "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w" };
-        maplayout[2] = new string[40] { "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "dhRc", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w" };
-        maplayout[3] = new string[40] { "w", "bB", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", " ", " ", "w", "w", "w", "w", "w", " ", " ", " ", " ", " ", " ", " ", "bG", "w" };
-        maplayout[4] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "dhBo", "w", "w", "w", "w", "dhGo", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", " ", " ", "w", "w", "w", "w", "w", "w", "w", "dhBc", "w", "w", "w", "w", " ", "w" };
-        maplayout[5] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", " ", "bB", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[6] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "bY", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "dhGc", "w", "dhYo", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[7] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "bR", "w", "w", "w", "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", " ", " ", " ", " ", " ", " ", " ", "dvRo", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[8] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "bG", "w", "w", "w", "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "dhGc", "w", "w", "w", "w", " ", "w" };
-        maplayout[9] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[10] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[11] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[12] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[13] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[14] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "bR", "w", "w", "w", "w", " ", "w" };
-        maplayout[15] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "dhBo", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[16] = new string[40] { "w", "bB", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "bG", "w", "w", "w", "w", "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", " ", "w" };
-        maplayout[17] = new string[40] { "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", " ", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w" };
-        maplayout[18] = new string[40] { "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", " ", "w", "w", "w", "dhYc", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w" };
-        maplayout[19] = new string[40] { "w", " ", " ", " ", " ", " ", " ", " ", "bA", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", " ", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w" };
-        maplayout[20] = new string[40] { "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "dvBo", " ", " ", " ", " ", " ", " ", "dvGc", " ", " ", "w", "w", "w", " ", " ", " ", " ", " ", " ", " ", "w", "w", "dvPc", "w" };
-        maplayout[21] = new string[40] { "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", " ", "w", "w", "w", " ", "w", "w", "w", " ", "w", "w", "w", "w", "w", " ", "w", "w", " ", "w" };
-        maplayout[22] = new string[40] { "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", "dhRo", "w", "w", "w", " ", "w", "w", "w", " ", "w", "w", "w", "w", "w", " ", "w", "w", " ", "w" };
-        maplayout[23] = new string[40] { "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", " ", "w", "w", "w", " ", "w", "w", "w", " ", "w", " ", "dvYc", "dvGc", "dvBc", " ", "w", "w", " ", "w" };
-        maplayout[24] = new string[40] { "w", "bR", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "bY", "w", "w", "w", "w", "w", " ", "w", "w", "w", " ", "w", "w", "w", " ", "w", " ", "w", "w", "w", " ", "w", "w", " ", "w" };
-        maplayout[25] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "dhBo", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", " ", "w", "w", "w", " ", " ", "bP", "w", " ", "dvRo", " ", "w", "w", " ", "w" };
-        maplayout[26] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "bR", "w", "w", "w", "w", " ", "w" };
-        maplayout[27] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", " ", "dvYo", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[28] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "bP", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[29] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[30] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[31] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "bG", "w", "w", "w", "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "dhGc", "w", "w", "w", "w", " ", "w" };
-        maplayout[32] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "bR", "w", "w", "w", "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", " ", " ", " ", " ", " ", " ", " ", "dvRo", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[33] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "bY", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "dhGc", "w", "dhYo", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[34] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", " ", "bB", "w", "w", "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", " ", "w" };
-        maplayout[35] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "dhBo", "w", "w", "w", "w", "dhGo", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", " ", " ", "w", "w", "w", "w", "w", "w", "w", "dhBc", "w", "w", "w", "w", " ", "w" };
-        maplayout[36] = new string[40] { "w", "bB", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", " ", " ", " ", "w", "w", "w", "w", "w", " ", " ", " ", " ", " ", " ", " ", "bG", "w" };
-        maplayout[37] = new string[40] { "w", "w", "w", "w", "w", " ", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "dhRc", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w" };
-        maplayout[38] = new string[40] { "w", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "w" };
-        maplayout[39] = new string[40] { "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w" };
+	void OnConnected(SocketIOEvent e)
+    {
+        Debug.Log("connected");
+        if (!connected)
+        {
+            firstConnect();
+        }
+        connected = true;
     }
 
-    private void OnConnected(SocketIOEvent e)
+    public void firstConnect()
     {
-        Debug.Log("Connected");
-        socket.Emit("move");
-        var buildGameMap = map.GetComponent<BuildMap>();
-        buildGameMap.buildLevel(maplayout);
+        // Tell the game our name
+        JSONObject name = new JSONObject();
+        name.AddField("name", iptext.text);
+        socket.Emit("name", name);
+
+        socket.On("lobbyUpdate", LobbyUpdateHandler);
+        socket.On("gameLobbyUpdate", GameLobbyHandler);
+        socket.On("initGame", InitHandler);
     }
 
-    private void OnSpawned(SocketIOEvent e)
+    public void GameLobbyHandler(SocketIOEvent e)
     {
-        Debug.Log("spawned");
-        player = Instantiate(playerPreFab);
-        Vector3 newPosition = new Vector3((float)(-18.5), (float)(0.5), (float)(-18.5));
-        player.transform.position = newPosition;
+        Debug.Log("Handling game lobby update");
+        Debug.Log(e.data.ToString());
+        if (LobbyPanel.activeSelf)
+        {
+            LobbyPanel.SetActive(false);
+            GameLobbyPanel.SetActive(true);
+        }
+        foreach (Transform child in NameTextPanel.transform)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+
+        Debug.Log(e.data["teamOne"]);
+        Debug.Log("begin");
+        if (e.data["teamOne"].ToString() != "[]") {
+            int i = 0;
+            while (e.data["teamOne"][i] && e.data["teamOne"][i].ToString() != "")
+            {
+                Debug.Log("sdgjjahdfough");
+                string name = e.data["teamOne"][i]["name"].ToString().Trim('\"');
+                Debug.Log(name);
+                GameObject g = (GameObject)Instantiate(Resources.Load("NameText"));
+                Text t = g.GetComponent<Text>();
+                t.text = name;
+                RectTransform r = g.GetComponent<RectTransform>();
+                r.SetParent(NameTextPanel.GetComponent<RectTransform>(), false);
+                r.anchoredPosition = new Vector2(40, -15 - 30 * i);
+                i += 1;
+            }
+        }
+        
+        Debug.Log("mid");
+        if (e.data["teamTwo"].ToString() != "[]") {
+            int i = 0;
+            while (e.data["teamTwo"][i] && e.data["teamTwo"][i].ToString() != "")
+            {
+                Debug.Log("asdfkhwo");
+                string name = e.data["teamTwo"][i]["name"].ToString().Trim('\"');
+                Debug.Log(name);
+                GameObject g = (GameObject)Instantiate(Resources.Load("NameText"));
+                Text t = g.GetComponent<Text>();
+                t.text = name;
+                RectTransform r = g.GetComponent<RectTransform>();
+                r.SetParent(NameTextPanel.GetComponent<RectTransform>(), false);
+                r.anchoredPosition = new Vector2(135, -15 - 30 * i);
+                i += 1;
+            }
+        }
+        Debug.Log("end");
+    }
+
+    public void LobbyUpdateHandler(SocketIOEvent e)
+    {
+        Debug.Log("Handling Lobby Update");
+        Debug.Log(e.data.ToString());
+        if (LoginPanel.activeSelf)
+        {
+            LoginPanel.SetActive(false);
+            LobbyPanel.SetActive(true);
+        }
+        else if (GameLobbyPanel.activeSelf)
+        {
+            GameLobbyPanel.SetActive(false);
+            LobbyPanel.SetActive(true);
+        }
+        else if (GameOverPanel.activeSelf)
+        {
+            GameOverPanel.SetActive(false);
+            LobbyPanel.SetActive(true);
+        }
+
+        foreach (Transform child in OpenGamesPanel.transform)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+        string gamesOpen = e.data["gamesOpen"].ToString();
+        if (e.data["gamesOpen"].ToString() != "[]")
+        {
+            int i = 0;
+            while (e.data["gamesOpen"][i].ToString() != "")
+            {
+                int gameID = Int32.Parse(e.data["gamesOpen"][i]["id"].ToString());
+                int numPlayers = Int32.Parse(e.data["gamesOpen"][i]["numPlayers"].ToString());
+                GameObject openGame = (GameObject)Instantiate(Resources.Load("OpenGame"));
+                RectTransform r = openGame.GetComponent<RectTransform>();
+                r.SetParent(OpenGamesPanel.transform, false);
+                r.anchoredPosition = new Vector2(0, -15 - 30 * i);
+
+                Debug.Log(numPlayers.ToString() + "/4 Players");
+                Text t = openGame.GetComponentInChildren<Text>();
+                t.text = numPlayers.ToString() + "/4 Players";
+
+                Button b = openGame.GetComponentInChildren<Button>();
+                b.onClick.AddListener(() => { JoinGame(gameID); });
+                i += 1;
+            }
+        }
+    }
+
+    public void CreateGame()
+    {
+        socket.Emit("createGame");
+    }
+
+    public void LeaveGame()
+    {
+        socket.Emit("leaveGame");
+    }
+
+    public void StartGame()
+    {
+        socket.Emit("startGame");
+    }
+
+    public void JoinGame(int num)
+    {
+        JSONObject idData = new JSONObject();
+        idData.AddField("gameNum", num);
+        socket.Emit("joinGame", idData);
+    }
+
+    public void SwitchTeam(int num)
+    {
+        JSONObject teamData = new JSONObject();
+        teamData.AddField("teamNum", num);
+        socket.Emit("switchTeam", teamData);
+    }
+
+    public void InitHandler(SocketIOEvent e)
+    {
+        if (GameLobbyPanel.activeSelf)
+        {
+            GameLobbyPanel.SetActive(false);
+        }
+        int r = 0;
+        while (e.data["mapData"][r])
+        {
+            int c = 0;
+            while (e.data["mapData"][r][c])
+            {
+                mapBuilder.buildLevel(c, r, e.data["mapData"][r][c].ToString());
+                c++;
+            }
+            r++;
+        }
+        Debug.Log(e.data["playerData"]);
+        int i = 0;
+        while(e.data["playerData"][i])
+        {
+            int x = int.Parse(e.data["playerData"][i]["spawn"]["x"].ToString());
+            int y = int.Parse(e.data["playerData"][i]["spawn"]["y"].ToString());
+            int id = int.Parse(e.data["playerData"][i]["id"].ToString());
+            int me = int.Parse(e.data["playerData"][i]["me"].ToString());
+            mapBuilder.createPlayer(x, y, id, me);
+            if (me == 1)
+            {
+                playerId = id;
+            }
+            i++;
+        }
+
+        socket.On("moveTo", OnMove);
+        socket.On("doorToggle", OnDoorToggle);
+        socket.On("gameOver", OnGameOver);
+    }
+
+    private void OnDoorToggle(SocketIOEvent e)
+    {
+        Debug.Log("Toggling door");
+        Debug.Log(e.data);
+
+        bool open = Convert.ToBoolean(e.data["state"].ToString());
+        int x = int.Parse(e.data["coords"]["x"].ToString());
+        int y = int.Parse(e.data["coords"]["y"].ToString());
+
+        mapBuilder.toggleDoor(x, y, open);
+    }
+
+    private void OnGameOver(SocketIOEvent e)
+    {
+        Debug.Log("Game Over!");
+        bool won = Convert.ToBoolean(int.Parse(e.data["won"].ToString()));
+        Debug.Log("You won:" + won.ToString());
+
+        foreach (Transform child in map.transform)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+
+        GameOverPanel.SetActive(true);
+        if (!won)
+        {
+            gameResultText.text = "You Lose :(";
+        }
     }
 
     private void OnMove(SocketIOEvent e)
     {
-        /*foreach (var player in players)
+        Debug.Log(e.data);
+        int id = int.Parse(e.data["id"].ToString());
+
+        int xCord = int.Parse(e.data["coords"]["x"].ToString());
+        int zCord = int.Parse(e.data["coords"]["y"].ToString());
+        float duration = float.Parse(e.data["duration"].ToString());
+        mapBuilder.movePlayer(id, xCord, zCord, duration);
+        
+    }
+
+    public void Connect()
+    {
+
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown("w"))
         {
-            if (player.Key == e.data["id"].ToString())
-            {*/
-                var navigateToPos = player.GetComponent<NavigatePosition>();
-                Vector3 currentPos = player.transform.position;
-                var x = float.Parse(e.data["x"].ToString().Replace("\"", ""));
-                var z = float.Parse(e.data["y"].ToString().Replace("\"", ""));
-                //Vector3 endPos = new Vector3(x, (float)(0.25), z);
-                Vector3 endPos = new Vector3((float)(18.5), (float)(0.25), (float)(-18.5));
-                navigateToPos.navigateTo(currentPos, endPos);
-        //   }
-        //}
+            Debug.Log("w Down");
+            JSONObject json = new JSONObject();
+            json.AddField("key", 'w');
+            socket.Emit("keydown", json);
+        }
+        else if (Input.GetKeyDown("a"))
+        {
+            Debug.Log("a Down");
+            JSONObject json = new JSONObject();
+            json.AddField("key", 'a');
+            socket.Emit("keydown", json);
+        }
+        else if (Input.GetKeyDown("s"))
+        {
+            Debug.Log("s Down");
+            JSONObject json = new JSONObject();
+            json.AddField("key", 's');
+            socket.Emit("keydown", json);
+        }
+        else if (Input.GetKeyDown("d"))
+        {
+            Debug.Log("d Down");
+            JSONObject json = new JSONObject();
+            json.AddField("key", 'd');
+            socket.Emit("keydown", json);
+        }
+
+        if (Input.GetKeyUp("w"))
+        {
+            Debug.Log("w Up");
+            JSONObject json = new JSONObject();
+            json.AddField("key", 'w');
+            socket.Emit("keyup", json);
+        }
+        if (Input.GetKeyUp("a"))
+        {
+            Debug.Log("a Up");
+            JSONObject json = new JSONObject();
+            json.AddField("key", 'a');
+            socket.Emit("keyup", json);
+        }
+        if (Input.GetKeyUp("s"))
+        {
+            Debug.Log("s Up");
+            JSONObject json = new JSONObject();
+            json.AddField("key", 's');
+            socket.Emit("keyup", json);
+        }
+        if (Input.GetKeyUp("d"))
+        {
+            Debug.Log("d Up");
+            JSONObject json = new JSONObject();
+            json.AddField("key", 'd');
+            socket.Emit("keyup", json);
+        }
+
+        /*if (Input.GetKeyUp("c"))
+        {
+            Debug.Log("released c");
+            socket.Emit("createGame");
+        }
+        else if (Input.GetKeyUp("j"))
+        {
+            JSONObject json = new JSONObject();
+            json.AddField("gameNum", 1);
+            socket.Emit("joinGame", json);
+        }
+        else if (Input.GetKeyUp("s"))
+        {
+            
+            JSONObject json = new JSONObject();
+            json.AddField("teamNum", 1);
+            socket.Emit("switchTeam", json );
+        }
+        else if (Input.GetKeyUp("d"))
+        {
+
+            JSONObject json = new JSONObject();
+            json.AddField("teamNum", 2);
+            socket.Emit("switchTeam", json);
+        }
+        else if (Input.GetKeyUp("l"))
+        {
+            socket.Emit("leaveGame");
+        }
+        else if (Input.GetKeyUp("t"))
+        {
+            socket.Emit("startGame");
+        }*/
     }
 }

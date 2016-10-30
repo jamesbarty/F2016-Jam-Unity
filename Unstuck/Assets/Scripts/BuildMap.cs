@@ -9,7 +9,9 @@ public class BuildMap : MonoBehaviour {
     public GameObject door;
     public GameObject button;
     public GameObject player;
+    private int playerId;
     public GameObject enemyPlayer;
+    private int enemyPlayerId;
 
     private string[][] maplayout = new string[40][];
 
@@ -17,6 +19,8 @@ public class BuildMap : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
+        floor = Instantiate(floor);
+        floor.transform.position += new Vector3(0, 0, 0);
         for (int i = 0; i < mapLayoutGameObject.Length; i++)
         {
             mapLayoutGameObject[i] = new GameObject[40];
@@ -65,95 +69,142 @@ public class BuildMap : MonoBehaviour {
         //buildLevel(maplayout);
     }
 
-    public void buildLevel(string[][] maplayout)
+    public void toggleDoor(int xCoord, int yCoord, bool open)
     {
-        //GameObject playerNew = Instantiate(player);
-        //playerNew.transform.position = new Vector3((float)(-18.5), (float)(0.25), (float)(-18.5));
-        floor = Instantiate(floor);
-        floor.transform.position += new Vector3(0, 0, 0);
-
-        for (int i = 0; i < maplayout.Length; i++)
+        if (open)
         {
-            for (int j = 0; j < maplayout[i].Length; j++)
+            mapLayoutGameObject[yCoord][xCoord].GetComponent<Animator>().Play("DoorOpening");
+        }
+        else
+        {
+            mapLayoutGameObject[yCoord][xCoord].GetComponent<Animator>().Play("DoorClosing");
+        }
+    }
+
+    public void movePlayer(int id, int xCord, int zCord, float dur)
+    {
+        GameObject target;
+        if (id == playerId) {
+            target = player;
+        }
+        else
+        {
+            target = enemyPlayer;
+        }
+        var navigateToPos = target.GetComponent<NavigatePosition>();
+        Vector3 currentPos = target.transform.position;
+        Vector3 endPos = new Vector3((float)(xCord-19.5), (float)(0.25), (float)(19.5 - zCord));
+        navigateToPos.navigateTo(currentPos, endPos, dur);
+    }
+
+    public void createPlayer(int xPos, int zPos, int id, int me)
+    {
+        Vector3 startPos = new Vector3((float)(xPos-19.5), 0.25f, (float)(19.5 - zPos));
+        if (me == 1)
+        {
+            player = Instantiate(player);
+            player.transform.SetParent(transform);
+            player.transform.position = startPos;
+            playerId = id;
+        }
+        else
+        {
+            enemyPlayer = Instantiate(enemyPlayer);
+            enemyPlayer.transform.SetParent(transform);
+            enemyPlayer.transform.position = startPos;
+            var renderer = enemyPlayer.GetComponent<Renderer>();
+            renderer.material.color = Color.black;
+            enemyPlayerId = id;
+        }
+    }
+
+    public void buildLevel(int c, int r, string input)
+    {
+        input = input.Replace("\"", "");
+        if (input == "w")
+        {
+            var wallPiece = Instantiate(wallBlock);
+            wallPiece.transform.SetParent(transform);
+            Vector3 newPosition = new Vector3((float)(c - 19.5), (float)(0.5), (float)(19.5 - r));
+            wallPiece.transform.position = newPosition;
+            mapLayoutGameObject[r][c] = wallPiece;
+        }
+        if (input.Substring(0, 1) == "d")
+        {
+            var doorPiece = Instantiate(door);
+            doorPiece.transform.SetParent(transform);
+            Vector3 newPosition = new Vector3((float)(c - 19.5), (float)(0.5), (float)(19.5 - r));
+            doorPiece.transform.position = newPosition;
+            if (input.Substring(1, 1) == "h")
             {
-                if (maplayout[i][j] == "w")
-                {
-                    var wallPiece = Instantiate(wallBlock);
-                    Vector3 newPosition = new Vector3((float)(j - 19.5), (float)(0.5), (float)(i - 19.5));
-                    wallPiece.transform.position = newPosition;
-                }
-                if (maplayout[i][j].Substring(0, 1) == "d")
-                {
-                    var doorPiece = Instantiate(door);
-                    Vector3 newPosition = new Vector3((float)(j - 19.5), (float)(0.5), (float)(i - 19.5));
-                    doorPiece.transform.position = newPosition;
-                    if (maplayout[i][j].Substring(1, 1) == "h")
-                    {
-                        Vector3 newRotation = new Vector3(0, 90, 0);
-                        doorPiece.transform.Rotate(newRotation);
-                    }
-                    if (maplayout[i][j].Substring(2, 1) == "R")
-                    {
-                        foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.red;
-                    }
-                    else if (maplayout[i][j].Substring(2, 1) == "B")
-                    {
-                        foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.blue;
-                    }
-                    else if (maplayout[i][j].Substring(2, 1) == "G")
-                    {
-                        foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.green;
-                    }
-                    else if (maplayout[i][j].Substring(2, 1) == "Y")
-                    {
-                        foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.yellow;
-                    }
-                    else if (maplayout[i][j].Substring(2, 1) == "P")
-                    {
-                        foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.magenta;
-                    }
-                    if (maplayout[i][j].Substring(3, 1) == "c")
-                    {
-                        doorPiece.GetComponent<Animator>().Play("DoorClosing");
-                    }
-                }
-                if (maplayout[i][j].Substring(0, 1) == "b")
-                {
-                    var buttonPiece = Instantiate(button);
-                    Vector3 newPosition = new Vector3((float)(j - 19.5), (float)(0.05), (float)(i - 19.5));
-                    buttonPiece.transform.position = newPosition;
-                    if (maplayout[i][j].Substring(1, 1) == "R")
-                    {
-                        foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.red;
-                    }
-                    else if (maplayout[i][j].Substring(1, 1) == "B")
-                    {
-                        foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.blue;
-                    }
-                    else if (maplayout[i][j].Substring(1, 1) == "G")
-                    {
-                        foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.green;
-                    }
-                    else if (maplayout[i][j].Substring(1, 1) == "Y")
-                    {
-                        foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.yellow;
-                    }
-                    else if (maplayout[i][j].Substring(1, 1) == "P")
-                    {
-                        foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
-                            child.material.color = Color.magenta;
-                    }
-                }
+                Vector3 newRotation = new Vector3(0, 90, 0);
+                doorPiece.transform.Rotate(newRotation);
             }
+            if (input.Substring(2, 1) == "R")
+            {
+                foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.red;
+            }
+            else if (input.Substring(2, 1) == "B")
+            {
+                foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.blue;
+            }
+            else if (input.Substring(2, 1) == "G")
+            {
+                foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.green;
+            }
+            else if (input.Substring(2, 1) == "Y")
+            {
+                foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.yellow;
+            }
+            else if (input.Substring(2, 1) == "P")
+            {
+                foreach (var child in doorPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.magenta;
+            }
+            if (input.Substring(3, 1) == "c")
+            {
+                doorPiece.GetComponent<Animator>().Play("DoorClosing");
+            }
+
+            mapLayoutGameObject[r][c] = doorPiece;
+        }
+        if (input.Substring(0, 1) == "b")
+        {
+            var buttonPiece = Instantiate(button);
+            buttonPiece.transform.SetParent(transform);
+            Vector3 newPosition = new Vector3((float)(c - 19.5), (float)(0.05), (float)(19.5 - r));
+            buttonPiece.transform.position = newPosition;
+            if (input.Substring(1, 1) == "R")
+            {
+                foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.red;
+            }
+            else if (input.Substring(1, 1) == "B")
+            {
+                foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.blue;
+            }
+            else if (input.Substring(1, 1) == "G")
+            {
+                foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.green;
+            }
+            else if (input.Substring(1, 1) == "Y")
+            {
+                foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.yellow;
+            }
+            else if (input.Substring(1, 1) == "P")
+            {
+                foreach (var child in buttonPiece.GetComponentsInChildren<Renderer>())
+                    child.material.color = Color.magenta;
+            }
+
+            mapLayoutGameObject[r][c] = buttonPiece;
         }
     }
 }
